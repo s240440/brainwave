@@ -351,7 +351,7 @@ const NOTIFS=[
   {id:"mail",kind:"app",app:"Mail",title:"DTU Learn",body:"New announcement in 02805"},
   {id:"slack",kind:"app",app:"Slack",title:"#thesis",body:"Supervisor: can we move our meeting?"}
 ];
-const TASKS=["1 Start a 30-minute session","2 Add 5 minutes","3 Done early: use the whole phone again","4 Work profile: everything blocked except Authenticator","5 LinkedIn for 10 minutes during a session","6 Weekday plan 9:00–11:00"];
+const TASKS=["Start a 30-minute session","Add 5 minutes","Done early: use the whole phone again","Work profile: everything blocked except Authenticator","LinkedIn for 10 minutes during a session","Weekday plan 9:00–11:00"];
 const PRESETS={
   notifications:{name:"Notifications only",desc:"No apps blocked, notifications hidden",apps:{others:"allowed",othersMin:10,othersEnd:"lock",ex:[]},notif:{calls:"all",messages:"hidden",others:"hidden",ex:[]}},
   social:{name:"Social media",desc:"Social media blocked, calls get through",apps:{others:"allowed",othersMin:10,othersEnd:"lock",ex:["Instagram","TikTok","Facebook","Snapchat"].map(a=>({app:a,mode:"blocked",min:10,end:"lock"}))},notif:{calls:"all",messages:"hidden",others:"hidden",ex:[]}},
