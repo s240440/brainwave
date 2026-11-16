@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Brainwave Prototype</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -194,6 +194,13 @@ select.field,select.mini-sel{appearance:none;-webkit-appearance:none;background-
 .simnote{font-size:12px;color:var(--ink2);text-align:center;padding:4px}
 .bigic{width:56px;height:56px;border-radius:12px;background:var(--sel);display:flex;align-items:center;justify-content:center;margin-top:110px;color:var(--pri);font-size:22px;font-weight:700}
 .inbanner{position:absolute;left:10px;right:10px;top:44px;z-index:25;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:12px}
+.shield{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:94px 40px 0;background:var(--bg)}
+.shield .sic{width:110px;height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+.shield .sic img{width:110px;height:auto}
+.shield .st{font-size:20px;font-weight:600;line-height:1.3;color:var(--ink)}
+.shield .ss{font-size:18px;line-height:26px;color:var(--ink2);margin-top:8px}
+.shield .sb{margin-top:auto;padding:32px 0;width:100%}
+.shield .sb button{width:100%;min-height:50px;border-radius:25px;border:0;background:var(--pri);color:#fff;font-size:17px;font-weight:600;box-shadow:0 4px 12px rgba(22,36,39,.18)}
 .splash{flex:1;display:flex;align-items:center;justify-content:center;padding:0 14px}
 .splash img{width:100%;max-width:365px;height:auto}
 
@@ -285,7 +292,7 @@ textarea.csv{width:100%;height:120px;font-family:var(--mono);font-size:11px;bord
       <div class="pbtns"><button class="pb p" id="pStart">Start task</button><button class="pb" id="pDone">Completed</button><button class="pb" id="pGiveup">Gave up</button></div>
       <div class="taskstate" id="pTaskState">No task running</div>
     </div>
-    <div class="psec">
+    <div class="psec" hidden>
       <h3>Simulate</h3>
       <div class="pbtns"><button class="pb" data-skip="1">Clock +1 min</button><button class="pb" data-skip="5">+5 min</button><button class="pb" data-skip="15">+15 min</button></div>
       <label class="pf">Send a notification<select class="pin" id="pNotif"></select></label>
@@ -344,7 +351,7 @@ const NOTIFS=[
   {id:"mail",kind:"app",app:"Mail",title:"DTU Learn",body:"New announcement in 02805"},
   {id:"slack",kind:"app",app:"Slack",title:"#thesis",body:"Supervisor: can we move our meeting?"}
 ];
-const TASKS=["Start a focus session","Set an end time, then extend it","Try to open Instagram during a session","Make a profile where Authenticator is allowed","Let LinkedIn be used for 10 minutes","Plan a weekday session","Free exploration"];
+const TASKS=["1 Start a 30-minute session","2 Add 5 minutes","3 Done early: use the whole phone again","4 Work profile: everything blocked except Authenticator","5 LinkedIn for 10 minutes during a session","6 Weekday plan 9:00–11:00"];
 const PRESETS={
   notifications:{name:"Notifications only",desc:"No apps blocked, notifications hidden",apps:{others:"allowed",othersMin:10,othersEnd:"lock",ex:[]},notif:{calls:"all",messages:"hidden",others:"hidden",ex:[]}},
   social:{name:"Social media",desc:"Social media blocked, calls get through",apps:{others:"allowed",othersMin:10,othersEnd:"lock",ex:["Instagram","TikTok","Facebook","Snapchat"].map(a=>({app:a,mode:"blocked",min:10,end:"lock"}))},notif:{calls:"all",messages:"hidden",others:"hidden",ex:[]}},
@@ -423,7 +430,16 @@ function appsSum(p){
 const callsTxt=n=>n.calls==="all"?"Calls get through":n.calls==="name"?"Calls show name only":"Calls hidden";
 function notifLong(n){const k=(n.messages==="name"?1:0)+n.ex.filter(e=>e.mode==="name").length;return callsTxt(n)+(k?" · "+k+(k===1?" app shows":" apps show")+" name only":"");}
 function notifShort(n){return callsTxt(n)+(n.others==="hidden"?" · other notifications hidden":n.others==="name"?" · others show name only":" · others show as usual");}
-function profListSub(p){
+function appsNative(p){
+  const c=m=>p.apps.ex.filter(e=>e.mode===m).length;const a=c("allowed"),l=c("limited"),b=c("blocked");let s;
+  if(p.apps.others==="blocked")s="Full lockdown"+(a?" · "+a+" allowed":"");
+  else if(p.apps.others==="limited")s="All other apps limited ("+p.apps.othersMin+" min)"+(b?" · "+b+" blocked":"");
+  else s=b?b+(b===1?" app":" apps")+" blocked":"No apps blocked";
+  if(l)s+=" · "+l+" limited";
+  return s;
+}
+function profListSub(p){return appsNative(p)+" · "+callsTxt(p.notif).toLowerCase();}
+function profListSubOld(p){
   const a=p.apps.ex.filter(e=>e.mode==="allowed").length,b=p.apps.ex.filter(e=>e.mode==="blocked").length;
   if(p.apps.others==="blocked")return "Full lockdown · "+a+(a===1?" app":" apps")+" allowed";
   const SOC=["Instagram","TikTok","Facebook","Snapchat","YouTube"];const bl=p.apps.ex.filter(e=>e.mode==="blocked");
@@ -450,10 +466,17 @@ function startSession(opts){
   S.session={profileId:opts.profileId,start:t,end:opts.durMin?t+opts.durMin*MIN:null,planned:opts.planned||null,hide:false,done:false,usage:{},locked:{},remindAt:{},hidden:[]};
   log("session_start",prof(opts.profileId).name,opts.planned?"planned "+opts.planned.start+"-"+opts.planned.end:opts.durMin?opts.durMin+" min":"no limit");
 }
+/* Ends the session (blocking stops) but keeps it for the complete screen. */
+function finishSession(how){
+  const s=S.session;if(!s||s.done)return;const t=vnow();
+  s.done=true;s.endedAt=s.end&&t>s.end?s.end:t;s.early=!!(s.end&&s.endedAt<s.end-30000);S.remind=null;
+  log("session_end",prof(s.profileId).name,how+" after "+Math.max(1,Math.round((s.endedAt-s.start)/MIN))+" min");
+  if(s.planned&&s.planned.once){const pl=S.plans.find(x=>x.id===s.planned.id);if(pl)pl.on=false;}
+}
+/* Clears a finished session (Done on the complete screen). */
 function endSession(how){
   const s=S.session;if(!s)return;
-  const mins=Math.round((vnow()-s.start)/MIN);
-  log("session_end",prof(s.profileId).name,how+" after "+mins+" min");
+  if(!s.done)finishSession(how);
   const hidden=s.hidden;S.session=null;S.remind=null;
   if(hidden.length)setTimeout(()=>banner({app:"Brainwave",title:hidden.length+(hidden.length===1?" notification":" notifications")+" from your session",body:hidden.map(h=>h.app).filter((v,i,a)=>a.indexOf(v)===i).join(", ")}),600);
 }
@@ -463,7 +486,7 @@ function startPlanned(plan,why){
   S.session=null;
   startSession({profileId:plan.profileId,planned:{start:plan.start,end:plan.end,id:plan.id}});
   S.session.end=end;
-  if(!plan.days.length)plan.on=false;
+  if(!plan.days.length)S.session.planned.once=true;
   S.pendingPlan=null;
   log("planned_session_auto_start",plan.start+"-"+plan.end,why||"");
   if(S.phone==="bw"){go("session");}
@@ -531,7 +554,7 @@ function tabbar(on){
 }
 const wrap=(inner,tab)=>`<div class="scroll"><div class="pg">${inner}</div></div>${tab?tabbar(tab):""}`;
 const titleBlock=(h,sub)=>`<div class="stack" style="gap:8px"><h1>${h}</h1>${sub?`<div class="sub">${sub}</div>`:""}</div>`;
-function infoCard(p){return `<div class="info"><div class="ico">${svg.shield}</div><div><div class="t">${esc(p.name)} profile</div><div class="d">${esc(notifShort(p.notif))}</div></div></div>`;}
+function infoCard(p){return `<div class="info"><div class="ico">${svg.shield}</div><div><div class="t">${esc(p.name)} profile</div><div class="d">${esc(appsNative(p)+" · "+notifShort(p.notif))}</div></div></div>`;}
 
 const V={};
 V.splash=()=>`<div class="splash" data-act="splashGo"><img src="${IMG.full}" alt="Brainwave · Find your focus"></div>`;
@@ -568,7 +591,7 @@ V.session=()=>{
   const s=S.session;if(!s)return V.home();
   const p=prof(s.profileId);
   let sub;
-  if(s.planned)sub=`<span class="subicon">${svg.cal}Planned focus session · ${s.planned.start}–${s.planned.end}</span>`;
+  if(s.planned)sub="Planned session · ends at "+fmtClock(s.end);
   else if(s.end)sub=fmtMin((s.end-s.start)/MIN)+" · ends at "+fmtClock(s.end);
   else sub="No time limit · focus at your own pace";
   const ext=v=>`<button class="btn btn-p btn-sm" data-act="extend" data-v="${v}">${svg.plus}${v} min</button>`;
@@ -580,10 +603,10 @@ V.session=()=>{
 
 V.complete=()=>{
   const s=S.session;if(!s)return V.home();
-  const p=prof(s.profileId);const mins=Math.round((s.end-s.start)/MIN);
-  return wrap(`${logo}${titleBlock("Session complete.","You can use your phone as usual again.")}
-  <div style="padding:20px 0 26px;display:flex;justify-content:center">${ring(null,`${svg.check}<span class="big" style="font-size:42px">${fmtMin(mins)}</span><span class="small">of focused time</span>`)}</div>
-  <div class="info plain"><div class="ico">${svg.shield}</div><div><div class="t">${esc(p.name)} profile · ended</div><div class="d">Apps and notifications are back to normal</div></div></div>
+  const mins=Math.max(1,Math.round(((s.endedAt||s.end)-s.start)/MIN));const early=!!s.early;
+  return wrap(`${logo}${titleBlock(early?"Session ended.":"Session complete.",early?"Every bit of focus counts. Time to take a break.":"Nice work. Time to take a break.")}
+  <div style="padding:20px 0 26px;display:flex;justify-content:center">${ring(null,`<span class="big">${fmtMin(mins)}</span><span class="small">of focused time</span>`)}</div>
+  <div class="info"><div class="ico"><svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7.5l2.6 2.6L11 4.5" fill="none" stroke="#162427" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="t">Apps and notifications are back to normal</div></div></div>
   <div class="grow" style="min-height:8px"></div>
   <div class="stack" style="gap:8px"><button class="btn btn-o" data-act="keepFocus">Keep focusing +15 min</button><div class="hint">Optional · adds 15 minutes to this session</div></div>
   <button class="btn btn-p" data-act="doneComplete">Done</button>`);
@@ -598,19 +621,14 @@ function appsShort(d){const a=d.apps.ex.filter(e=>e.mode==="allowed").length,l=d
   return parts.join(" · ")||(d.apps.others==="blocked"?"All blocked":"None blocked");}
 function profileForm(){
   const d=S.draft;const isNew=d.kind==="new";
-  const presetCards=Object.entries(PRESETS).map(([k,v])=>`<button class="ccard ${d.preset===k?"on":""}" style="min-height:62px;padding:12px 14px" data-act="preset" data-v="${k}" aria-pressed="${d.preset===k}"><div><div class="t">${v.name}</div><div class="d">${v.desc}</div></div></button>`).join("");
-  const rows=isNew
-    ?`<button class="item" data-act="goApps"><span class="t">Apps</span><span class="val">${esc(appsShort(d))}</span>${svg.chev}</button>
-      <button class="item" data-act="goNotifs"><span class="t">Notifications</span><span class="val">${esc(callsTxt(d.notif))}</span>${svg.chev}</button>`
-    :`<button class="item" data-act="goApps"><div><div class="t">Apps</div><div class="d">${esc(appsSum(d))}</div></div>${svg.chev}</button>
+  const rows=`<button class="item" data-act="goApps"><div><div class="t">Apps</div><div class="d">${esc(appsNative(d))}</div></div>${svg.chev}</button>
       <button class="item" data-act="goNotifs"><div><div class="t">Notifications</div><div class="d">${esc(notifLong(d.notif))}</div></div>${svg.chev}</button>`;
   return wrap(`${back("cancelDraft")}<h1 style="margin-top:0">${isNew?"New profile":"Edit profile"}</h1>
   <div class="stack"><label class="label" for="pname">Name</label><input class="field" id="pname" data-field="draftName" value="${esc(d.name)}" placeholder="e.g. Study, Work, Evening" autocomplete="off">${S.draftErr?`<div class="err">${esc(S.draftErr)}</div>`:""}</div>
-  ${isNew?`<div class="stack"><div class="label">Start from</div><div class="stack" style="gap:8px">${presetCards}</div></div>`:""}
-  <div class="stack"><div class="label">${isNew?"Adjust (optional)":"Settings"}</div><div class="card list">${rows}</div></div>
+  <div class="stack"><div class="label">Settings</div><div class="card list">${rows}</div></div>
   <div class="grow"></div>
-  <button class="btn btn-p" data-act="saveProfile">${isNew?"Save profile":"Save changes"}</button>
-  ${!isNew&&S.profiles.length>1?`<button class="btn btn-o" data-act="askDeleteProfile">Delete profile</button>`:""}`);
+  <button class="btn btn-p" data-act="saveProfile">${isNew?"Create profile":"Save changes"}</button>
+  ${!isNew&&S.profiles.length>1?`<button class="btn btn-o" data-act="deleteProfile">Delete profile</button>`:""}`);
 }
 V.profileForm=profileForm;
 
@@ -627,18 +645,22 @@ V.apps=()=>{
   const ex=a.ex.map((e,i)=>`<div class="exgroup"><div class="srow"><span class="n">${esc(e.app)}</span>${seg(MODES,e.mode,"exMode",`data-i="${i}"`)}${trashBtn("rmEx",i,e.app)}</div>${e.mode==="limited"?limitRows(e.min,e.end,"ex",i):""}</div>`).join("");
   return wrap(`${back("backToForm")}<h1 style="margin-top:0">Apps</h1>
   <div class="legend"><div><b>Blocked</b> · can't open during focus</div><div><b>Limited</b> · opens for a set time, then locks or reminds you</div><div><b>Allowed</b> · always available</div></div>
-  <div class="card exgroup" style="border-color:var(--pri)"><div class="srow"><div><div class="n">All other apps</div><div class="nd">Apps not set below</div></div>${seg(MODES,a.others,"othersMode")}</div>${a.others==="limited"?limitRows(a.othersMin,a.othersEnd,"others"):""}</div>
+  <div class="card exgroup"><div class="srow"><div><div class="n">All other apps</div><div class="nd">Apps not set below</div></div>${seg(MODES,a.others,"othersMode")}</div>${a.others==="limited"?limitRows(a.othersMin,a.othersEnd,"others"):""}</div>
   <div class="stack"><div class="label">Exceptions</div>
    ${ex?`<div class="card list">${ex}</div>`:`<div class="note">No exceptions yet. Add an app to set it separately.</div>`}</div>
   <button class="textbtn" data-act="goAddApp" data-v="apps">${svg.plus}<span>Add an app</span></button>
   <div class="grow"></div><button class="btn btn-p" data-act="backToForm" data-log="Done (apps)">Done</button>`);
 };
 V.notifs=()=>{
-  const n=S.draft.notif;const opts=[["hidden","Hidden"],["name","Name only"],["all","All"]];
+  const n=S.draft.notif;const opts=[["hidden","Hidden"],["name","Name only"],["all","Shown"]];
   const row=(label,cur,act,i)=>`<div class="srow"><span class="n">${esc(label)}</span>${seg(opts,cur,act,i!=null?`data-i="${i}"`:"")}${i!=null?trashBtn("rmNotif",i,label):`<span class="trash" aria-hidden="true"></span>`}</div>`;
   return wrap(`${back("backToForm")}<h1 style="margin-top:0">Notifications</h1>
-  <div class="legend"><div><b>Hidden</b> · you see it after the session</div><div><b>Name only</b> · shows which app, not the message</div><div><b>All</b> · shows as usual</div></div>
-  <div class="card list">${row("Phone calls",n.calls,"nCalls")}${row("Messages",n.messages,"nMsgs")}${n.ex.map((e,i)=>row(e.app,e.mode,"nEx",i)).join("")}${row("All other apps",n.others,"nOthers")}</div>
+  <div class="legend"><div><b>Hidden</b> · you see it after the session</div><div><b>Name only</b> · shows which app, not the message</div><div><b>Shown</b> · shows as usual</div></div>
+  <div class="card exgroup"><div class="srow"><div><div class="n">All other apps</div><div class="nd">Apps not set below</div></div>${seg(opts,n.others,"nOthers")}</div></div>
+  <div class="stack"><div class="label">Calls and messages</div>
+   <div class="card list">${row("Phone calls",n.calls,"nCalls")}${row("Messages",n.messages,"nMsgs")}</div></div>
+  <div class="stack"><div class="label">Exceptions</div>
+   ${n.ex.length?`<div class="card list">${n.ex.map((e,i)=>row(e.app,e.mode,"nEx",i)).join("")}</div>`:`<div class="note">No exceptions yet. Add an app to set it separately.</div>`}</div>
   <button class="textbtn" data-act="goAddApp" data-v="notifs">${svg.plus}<span>Add an app</span></button>
   <div class="grow"></div><button class="btn btn-p" data-act="backToForm" data-log="Done (notifications)">Done</button>`);
 };
@@ -663,6 +685,7 @@ V.plan=()=>wrap(`${logo}${titleBlock("Planned focus","Planned sessions start on 
   ${S.plans.length?`<div class="stack">${S.plans.map(p=>`<div class="ccard plan" style="padding:12px 12px 12px 16px"><button data-act="editPlan" data-v="${p.id}" style="border:0;background:none;text-align:left;padding:0;flex:1" data-log="Plan ${p.start}-${p.end}"><div class="time">${p.start} – ${p.end}</div><div class="d">${esc(daysTxt(p.days))} · ${esc(prof(p.profileId).name)}</div></button><button class="checkbtn" role="switch" aria-checked="${p.on}" aria-label="Plan on or off" data-act="togglePlan" data-v="${p.id}" data-log="Toggle plan ${p.start}-${p.end} ${p.on?"off":"on"}"><span>${p.on?"On":"Off"}</span><span class="box ${p.on?"on":""}">${p.on?svg.tick:""}</span></button></div>`).join("")}</div>`:`<div class="sub">No planned sessions yet.</div>`}
   <button class="btn btn-p" data-act="newPlan">+ Plan a session</button>`,"plan");
 
+function planMins(d){if(!d.start||!d.end)return 0;const m=t=>{const[h,mm]=t.split(":").map(Number);return h*60+mm;};let x=m(d.end)-m(d.start);if(x<=0)x+=1440;return x;}
 V.planForm=()=>{
   const d=S.planDraft;const N=["M","T","W","T","F","S","S"],L=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
   return wrap(`${back("cancelPlan")}<h1 style="margin-top:0">${d.isNew?"New plan":"Edit plan"}</h1>
@@ -672,15 +695,14 @@ V.planForm=()=>{
   <div class="stack"><div class="label">Repeat</div><div class="days">${N.map((x,i)=>`<button class="${d.days.includes(i)?"on":""}" data-act="planDay" data-v="${i}" aria-pressed="${d.days.includes(i)}" aria-label="${L[i]}" data-log="Day ${L[i]}">${x}</button>`).join("")}</div><div class="note">No days selected = only once</div></div>
   <button class="remindcard" data-act="planRemind" role="checkbox" aria-checked="${d.remind}"><span><span style="font-size:15px;font-weight:500;display:block">Remind me before it starts</span><span class="note" style="display:block;margin-top:4px">You get a notification 5 minutes before</span></span><span class="box ${d.remind?"on":""}">${d.remind?svg.tick:""}</span></button>
   ${S.draftErr?`<div class="err">${esc(S.draftErr)}</div>`:""}
-  <div class="note">Starts automatically at ${d.start} and ends at ${d.end}. To stop early, press and hold End session.</div>
-  <div class="grow"></div><button class="btn btn-p" data-act="savePlan">Save plan</button>
-  ${d.isNew?"":`<button class="btn btn-o" data-act="askDeletePlan">Delete plan</button>`}`);
+  ${planMins(d)<15?`<div class="note" style="color:var(--warn)">A planned session must be at least 15 minutes.</div>`:`<div class="note">Starts automatically at ${d.start} and ends at ${d.end}. To stop early, press and hold End session.</div>`}
+  <div class="grow"></div><button class="btn btn-p" data-act="savePlan" ${planMins(d)<15?"disabled style='opacity:.5'":""}>Save plan</button>
+  ${d.isNew?"":`<button class="btn btn-o" data-act="deletePlan">Delete plan</button>`}`);
 };
 
 function phoneHome(){
   const s=active()?S.session:null;
   return `<div class="wall"></div><div class="scroll" style="position:relative">
-  ${s?`<button class="focuspill" data-act="openBW" data-log="Focus pill"><img src="${IMG.mark}" alt=""><span>${s.planned?"Planned focus":"Focus"} · ${s.end?"until "+fmtClock(s.end):"no time limit"}</span></button>`:""}
   <div class="homegrid">
    <button class="appbtn" data-act="openApp" data-v="Brainwave" data-log="Open Brainwave"><span class="ic" style="background:#fff"><img src="${IMG.mark}" alt=""></span><span>Brainwave</span></button>
    ${HOME_APPS.map(a=>`<button class="appbtn" data-act="openApp" data-v="${a}" data-log="Open ${a}"><span class="ic" style="background:${APPS[a]}">${a[0]}</span><span>${a}</span></button>`).join("")}
@@ -688,17 +710,8 @@ function phoneHome(){
 }
 function appScreen(){
   const a=S.app;const st=appState(a);const s=S.session;
-  if(st==="blocked"){
-    const sub=s.planned?`<span class="subicon">${svg.cal}Planned focus session · until ${fmtClock(s.end)}</span>`:s.end?`<span class="subicon">${svg.clock}Focus session · until ${fmtClock(s.end)}</span>`:`<span class="subicon">${svg.clock}Focus session · no time limit</span>`;
-    return wrap(`${logo}<div class="bigic">${a==="Instagram"?svg.insta:svg.lockBig}</div>
-    <div class="stack" style="gap:12px"><h1 style="font-size:28px;margin:0">${esc(a)} is paused during your focus session</h1><div class="sub">${sub}</div></div>
-    <div class="grow"></div><button class="btn btn-p" data-act="backToFocus">Back to focus</button>`);
-  }
-  if(st==="locked"){
-    const m=modeFor(prof(s.profileId),a);
-    return wrap(`${logo}<div class="bigic">${svg.clockBig}</div>
-    <div class="stack" style="gap:12px"><h1 style="font-size:28px;margin:0">Your ${m.min} minutes on ${esc(a)} are up</h1><div class="sub">${esc(a)} is locked again until your focus session ends.</div></div>
-    <div class="grow"></div><button class="btn btn-p" data-act="backToFocus">Back to focus</button>`);
+  if(st==="blocked"||st==="locked"){
+    return `<div class="shield"><div class="sic"><img src="${IMG.mark}" alt=""></div><div class="st">You're in focus.</div><div class="ss">This app is paused until your session ends.</div><div class="sb"><button data-act="backToFocus">Back to focus</button></div></div>`;
   }
   return `<div class="fakeapp"><div class="hd"><span class="mini" style="background:${APPS[a]||"#555"};width:30px;height:30px;font-size:14px">${esc(a[0])}</span>${esc(a)}</div><div class="feed">
     <div class="ph img"></div><div class="ph" style="width:70%"></div><div class="ph" style="width:85%"></div>
@@ -748,8 +761,8 @@ function sheetHTML(){
     const st=(lbl,act,val,dl,il)=>`<div class="stepper"><span class="sl">${lbl}</span><div class="ctr"><button data-act="${act}" data-v="${act==="custH"?-1:-5}" aria-label="${dl}">−</button><span class="v">${val}</span><button data-act="${act}" data-v="${act==="custH"?1:5}" aria-label="${il}">+</button></div></div>`;
     return `<div class="scrim" data-act="closeSheet" data-self="1"><div class="sheet handle"><h2>Custom duration</h2>
     <div class="steppers">${st("Hours","custH",S.custH,"Fewer hours","More hours")}${st("Minutes","custM",pad(S.custM),"Fewer minutes","More minutes")}</div>
-    <div class="endsrow"><span>Ends at</span><b data-bind="custEnds">${tot?fmtClock(vnow()+tot*MIN):"–"}</b></div>
-    <div class="row" style="gap:10px"><button class="btn btn-o" data-act="closeSheet">Cancel</button><button class="btn btn-p" data-act="confirmCustom" ${tot?"":"disabled style='opacity:.5'"}>Confirm</button></div></div></div>`;
+    <div class="endsrow"><span>Ends at</span>${tot>=15?`<b data-bind="custEnds">${fmtClock(vnow()+tot*MIN)}</b>`:`<b style="color:var(--warn)">Min. 15 min</b>`}</div>
+    <div class="row" style="gap:10px"><button class="btn btn-o" data-act="closeSheet">Cancel</button><button class="btn btn-p" data-act="confirmCustom" ${tot>=15?"":"disabled style='opacity:.5'"}>Confirm</button></div></div></div>`;
   }
   if(S.sheet==="delProfile"||S.sheet==="delPlan"){
     const isP=S.sheet==="delProfile";
@@ -769,9 +782,9 @@ const A={
   tab(v){go(v);},
   homeDur(v){S.homeDur=+v;render();},
   openCustom(v){S.sheetFor=v;const base=v==="home"?(S.homeDur||90):(S.sheetDur||90);S.custH=Math.floor(base/60);S.custM=base%60-(base%5);S.sheet="custom";renderOverlay();log("sheet_open","custom duration",v);},
-  custH(v){S.custH=Math.min(12,Math.max(0,S.custH+ +v));renderOverlay();},
+  custH(v){S.custH=Math.min(8,Math.max(0,S.custH+ +v));renderOverlay();},
   custM(v){let m=S.custM+ +v;if(m>=60){m=0;}if(m<0){m=55;}S.custM=m;renderOverlay();},
-  confirmCustom(){const t=S.custH*60+S.custM;if(!t)return;log("custom_duration_set",fmtMin(t),S.sheetFor);
+  confirmCustom(){const t=S.custH*60+S.custM;if(t<15)return;log("custom_duration_set",fmtMin(t),S.sheetFor);
     if(S.sheetFor==="home"){S.homeDur=t;S.sheet=null;render();}else{S.sheetDur=t;S.sheet="endtime";renderOverlay();}},
   closeSheet(){if(S.sheet==="custom"&&S.sheetFor==="session"){S.sheet="endtime";}else S.sheet=null;log("sheet_close","cancel");renderOverlay();},
   startFocus(){startSession({profileId:S.homeProfile,durMin:S.homeDur});go("session");},
@@ -780,16 +793,15 @@ const A={
   sheetDur(v){S.sheetDur=+v;renderOverlay();},
   confirmEndTime(){if(!S.sheetDur)return;S.session.end=vnow()+S.sheetDur*MIN;log("end_time_set",S.sheetDur+" min","ends "+fmtClock(S.session.end));S.sheet=null;render();},
   extend(v){S.session.end+=+v*MIN;log("extend","+"+v+" min","ends "+fmtClock(S.session.end));render();},
-  keepFocus(){const s=S.session;s.done=false;s.end=vnow()+15*MIN;log("keep_focusing","+15 min");go("session");},
+  keepFocus(){const pid=S.session.profileId;log("keep_focusing","+15 min");S.session=null;startSession({profileId:pid,durMin:15});go("session");},
   doneComplete(){endSession("completed");go("home");},
-  backToFocus(){log("back_to_focus",S.app||"");openBW();},
+  backToFocus(){log("back_to_focus",S.app||"");closeApp();S.phone="home";render();},
   keepUsing(){log("limit_reminder_keep_using",S.remind);S.remind=null;renderOverlay();},
   bannerTap(id){const b=S.banners.find(x=>x.id===id);S.banners=S.banners.filter(x=>x.id!==id);
     if(b&&b.act==="openBW"){openBW();}else if(b&&b.app!=="Brainwave"&&!["Phone"].includes(b.app)&&APPS[b.app]){openApp(b.app);}else renderOverlay();},
   /* profiles */
   editProfile(id){const p=prof(id);S.draft={kind:"edit",...clone(p)};S.draftErr="";go("profileForm");},
-  newProfile(){S.draft={kind:"new",id:"p"+uid(),name:"",preset:"social",apps:clone(PRESETS.social.apps),notif:clone(PRESETS.social.notif)};S.draftErr="";go("profileForm");},
-  preset(k){S.draft.preset=k;S.draft.apps=clone(PRESETS[k].apps);S.draft.notif=clone(PRESETS[k].notif);render();},
+  newProfile(){S.draft={kind:"new",id:"p"+uid(),name:"",apps:{others:"allowed",othersMin:10,othersEnd:"lock",ex:[]},notif:{calls:"all",messages:"all",others:"all",ex:[]}};S.draftErr="";go("profileForm");},
   cancelDraft(){S.draft=null;go("profiles");},
   goApps(){S.appSearch="";go("apps");},
   goNotifs(){go("notifs");},
@@ -798,8 +810,8 @@ const A={
   clearSearch(){S.addSearch="";render();const n=document.querySelector('[data-field="addSearch"]');if(n)n.focus();},
   addPicked(v){if(S.addFor==="apps"){const a=S.draft.apps;a.ex.push({app:v,mode:a.others==="blocked"?"allowed":"blocked",min:10,end:"lock"});log("exception_added",v,a.ex[a.ex.length-1].mode);go("apps");}else{S.draft.notif.ex.push({app:v,mode:"name"});log("notif_app_added",v,"name");go("notifs");}},
   backToForm(){go("profileForm");},
-  saveProfile(){const d=S.draft;const name=d.name.trim();
-    if(!name){S.draftErr="Give your profile a name.";render();log("validation_error","profile name empty");return;}
+  saveProfile(){const d=S.draft;let name=d.name.trim();
+    if(!name){name="Untitled profile";}
     if(S.profiles.some(p=>p.id!==d.id&&p.name.toLowerCase()===name.toLowerCase())){S.draftErr="You already have a profile with that name.";render();return;}
     const out={id:d.id,name,apps:clone(d.apps),notif:clone(d.notif)};
     const i=S.profiles.findIndex(p=>p.id===d.id);if(i>=0)S.profiles[i]=out;else S.profiles.push(out);
@@ -807,7 +819,7 @@ const A={
     S.draft=null;go("profiles");},
   askDeleteProfile(){S.sheet="delProfile";renderOverlay();},
   deleteProfile(){const id=S.draft.id;const name=S.draft.name;S.profiles=S.profiles.filter(p=>p.id!==id);
-    S.plans.forEach(p=>{if(p.profileId===id)p.profileId=S.profiles[0].id;});if(S.homeProfile===id)S.homeProfile=S.profiles[0].id;
+    S.plans=S.plans.filter(p=>p.profileId!==id);if(S.homeProfile===id)S.homeProfile=S.profiles[0].id;
     log("profile_deleted",name);S.draft=null;go("profiles");},
   othersMode(v){S.draft.apps.others=v;render();},
   othersMin(v){S.draft.apps.othersMin=+v;render();},
@@ -829,7 +841,7 @@ const A={
   cancelPlan(){S.planDraft=null;go("plan");},
   planDay(v){const d=S.planDraft.days;const i=+v;const k=d.indexOf(i);if(k>=0)d.splice(k,1);else d.push(i);d.sort();render();},
   planRemind(){S.planDraft.remind=!S.planDraft.remind;render();},
-  savePlan(){const d=S.planDraft;if(!d.start||!d.end||d.start===d.end){S.draftErr="Choose a start and an end time.";render();return;}
+  savePlan(){const d=S.planDraft;if(!d.start||!d.end||planMins(d)<15){return;}
     const out={id:d.id,profileId:d.profileId,start:d.start,end:d.end,days:d.days,remind:d.remind,on:d.isNew?true:d.on};
     const i=S.plans.findIndex(p=>p.id===d.id);if(i>=0)S.plans[i]=out;else S.plans.push(out);
     log(d.isNew?"plan_created":"plan_saved",d.start+"-"+d.end,daysTxt(d.days)+" · "+prof(d.profileId).name+" · remind="+d.remind);
@@ -891,7 +903,7 @@ $("#screen").addEventListener("pointerdown",e=>{
   b.classList.add("holding");b.querySelector("[data-holdlbl]").textContent="Keep holding to end…";
   b.parentElement.querySelector("[data-holdhint]").textContent="Let go to keep focusing";
   log("hold_start","End session");
-  holdT=setTimeout(()=>{holdT=null;holdBtnEl=null;log("hold_complete","End session","3000 ms");endSession(S.session&&S.session.planned?"ended early (planned)":"ended by hold");go("home");},3000);
+  holdT=setTimeout(()=>{holdT=null;holdBtnEl=null;log("hold_complete","End session","3000 ms");finishSession(S.session&&S.session.planned?"ended early (planned)":"ended by hold");go("complete");},3000);
 });
 const holdEnd=()=>{if(holdT&&holdBtnEl){holdReset(holdBtnEl,true);}holdBtnEl=null;};
 ["pointerup","pointercancel","lostpointercapture"].forEach(t=>$("#screen").addEventListener(t,holdEnd));
@@ -901,7 +913,7 @@ $("#screen").addEventListener("keydown",e=>{
   b.classList.add("holding");b.querySelector("[data-holdlbl]").textContent="Keep holding to end…";
   b.parentElement.querySelector("[data-holdhint]").textContent="Let go to keep focusing";
   log("hold_start","End session","keyboard");
-  holdT=setTimeout(()=>{holdT=null;holdBtnEl=null;log("hold_complete","End session","3000 ms");endSession(S.session&&S.session.planned?"ended early (planned)":"ended by hold");go("home");},3000);
+  holdT=setTimeout(()=>{holdT=null;holdBtnEl=null;log("hold_complete","End session","3000 ms");finishSession(S.session&&S.session.planned?"ended early (planned)":"ended by hold");go("complete");},3000);
 });
 $("#screen").addEventListener("keyup",e=>{if((e.key===" "||e.key==="Enter")&&e.target.closest&&e.target.closest("[data-hold]"))holdEnd();});
 $("#screen").addEventListener("contextmenu",e=>{if(e.target.closest("[data-hold]"))e.preventDefault();});
@@ -929,13 +941,13 @@ function tick(onlyUI){
         const a=S.app;const m=modeFor(prof(s.profileId),a);
         s.usage[a]=(s.usage[a]||0)+Math.max(0,t-prev);
         const lim=m.min*MIN;
-        if(m.end==="lock"&&s.usage[a]>=lim){s.locked[a]=true;log("limit_reached",a,"locked after "+m.min+" min");render();}
-        else if(m.end==="remind"){const next=(s.remindAt[a]||0)+lim;if(s.usage[a]>=next){s.remindAt[a]=next;S.remind=a;log("limit_reached",a,"reminder after "+Math.round(s.usage[a]/MIN)+" min");renderOverlay();}}
+        if(m.end==="lock"&&s.usage[a]>=lim){s.locked[a]=true;log("limit_reached",a,"locked after "+m.min+" min");render();banner({app:"Brainwave",title:"Time's up",body:"Your limited apps are now locked until the session ends."});}
+        else if(m.end==="remind"&&!s.remindAt[a]&&s.usage[a]>=lim){s.remindAt[a]=lim;log("limit_reached",a,"reminded after "+m.min+" min");banner({app:"Brainwave",title:"Time's up",body:"You've used your "+m.min+" minutes."});}
       }
       if(s.end&&t>=s.end){
-        s.done=true;S.remind=null;log("session_complete",prof(s.profileId).name,Math.round((s.end-s.start)/MIN)+" min");
+        finishSession("timer");
         if(S.phone==="bw"){go("complete");}
-        else{if(S.phone==="app")render();banner({app:"Brainwave",title:"Session complete",body:"You can use your phone as usual again.",act:"openBW"});}
+        else{if(S.phone==="app")render();banner({app:"Brainwave",title:"Focus session complete",body:"Your apps are back to normal.",act:"openBW"});}
         return;
       }
     }
@@ -950,7 +962,7 @@ function tick(onlyUI){
 }
 function tickHome(){const n=document.querySelector('[data-bind="homeEnds"]');if(n&&S.homeDur)n.textContent=fmtClock(vnow()+S.homeDur*MIN);
   if(S.sheet==="custom"){const tot=S.custH*60+S.custM;const c=document.querySelector('[data-bind="custEnds"]');if(c&&tot)c.textContent=fmtClock(vnow()+tot*MIN);}}
-function remindBanner(p){banner({app:"Brainwave",title:"Focus session starts in 5 min",body:p.start+"–"+p.end+" · "+prof(p.profileId).name,act:"openBW",ms:9000});}
+function remindBanner(p){banner({app:"Brainwave",title:"Focus session in 5 minutes",body:prof(p.profileId).name+" · "+p.start+" – "+p.end,act:"openBW",ms:9000});}
 setInterval(()=>{tick(false);tickHome();},250);
 
 /* ================= facilitator panel ================= */
@@ -1037,4 +1049,5 @@ if(isP()){log("mode","participant link");if(!META.pid){openDrawer();setTimeout((
 setTimeout(()=>{if(S.screen==="splash"&&S.phone==="bw"){S.splashDone=true;go("home");}},1400);
 })();
 </script>
+
 </body></html>
