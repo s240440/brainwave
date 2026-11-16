@@ -284,7 +284,7 @@ textarea.csv{width:100%;height:120px;font-family:var(--mono);font-size:11px;bord
     <div class="psec">
       <h3>Participant</h3>
       <label class="pf">Participant ID<input class="pin" id="pId" placeholder="e.g. T01" autocomplete="off"></label>
-      <div class="pbtns fac-only"><button class="pb" id="pNew">New participant</button></div>
+      <div class="pbtns"><button class="pb" id="pNew">New participant</button></div>
     </div>
     <div class="psec">
       <h3>Task</h3>
@@ -305,7 +305,7 @@ textarea.csv{width:100%;height:120px;font-family:var(--mono);font-size:11px;bord
       <h3>Interaction log <span class="count" id="pCount"></span></h3>
       <p class="pnote pmode-only">When the test is finished: tap Download CSV and send the file to your facilitator, or tap Copy CSV and paste it into the call chat.</p>
       <div class="logbox fac-only" id="pLog"></div>
-      <div class="pbtns"><button class="pb p" id="pExport">Download CSV</button><button class="pb" id="pCopy">Copy CSV</button><button class="pb warn fac-only" id="pClear">Clear log</button></div>
+      <div class="pbtns"><button class="pb p" id="pExport">Download CSV</button><button class="pb" id="pCopy">Copy CSV</button><button class="pb warn" id="pClear">Clear log</button></div>
       <textarea class="csv" id="pCsv" hidden readonly aria-label="CSV export"></textarea>
       <p class="pnote" id="pMsg"></p>
     </div>
