@@ -362,7 +362,8 @@ const PRESETS={
 function freshData(){
   return {
     profiles:[
-      {id:"p1",name:"Default",apps:clone(PRESETS.social.apps),notif:clone(PRESETS.social.notif)}
+      {id:"p1",name:"Default",apps:{others:"allowed",othersMin:10,othersEnd:"lock",ex:[]},notif:{calls:"all",messages:"all",others:"all",ex:[]}},
+      {id:"p2",name:"Study",apps:{others:"blocked",othersMin:10,othersEnd:"lock",ex:[]},notif:{calls:"all",messages:"all",others:"all",ex:[]}}
     ],
     plans:[]
   };
@@ -428,7 +429,7 @@ function notifLong(n){const k=(n.messages==="name"?1:0)+n.ex.filter(e=>e.mode===
 function notifShort(n){return callsTxt(n)+(n.others==="hidden"?" · other notifications hidden":n.others==="name"?" · others show name only":" · others show as usual");}
 function appsNative(p){
   const c=m=>p.apps.ex.filter(e=>e.mode===m).length;const a=c("allowed"),l=c("limited"),b=c("blocked");let s;
-  if(p.apps.others==="blocked")s="Full lockdown"+(a?" · "+a+" allowed":"");
+  if(p.apps.others==="blocked")s="All apps blocked"+(a?" · "+a+" allowed":"");
   else if(p.apps.others==="limited")s="All other apps limited ("+p.apps.othersMin+" min)"+(b?" · "+b+" blocked":"");
   else s=b?b+(b===1?" app":" apps")+" blocked":"No apps blocked";
   if(l)s+=" · "+l+" limited";
@@ -832,7 +833,7 @@ const A={
   rmNotif(v,el){const r=S.draft.notif.ex.splice(+el.dataset.i,1)[0];log("notif_app_deleted",r.app);render();},
   addNotifApp(v){S.draft.notif.ex.push({app:v,mode:"name"});go("notifs");},
   /* plans */
-  newPlan(){S.planDraft={isNew:true,id:"pl"+uid(),profileId:S.profiles[0].id,start:"09:00",end:"12:00",days:[],remind:true,on:true};S.draftErr="";go("planForm");},
+  newPlan(){S.planDraft={isNew:true,id:"pl"+uid(),profileId:S.profiles[0].id,start:"08:30",end:"15:30",days:[],remind:true,on:true};S.draftErr="";go("planForm");},
   editPlan(id){S.planDraft={isNew:false,...clone(S.plans.find(p=>p.id===id))};S.draftErr="";go("planForm");},
   cancelPlan(){S.planDraft=null;go("plan");},
   planDay(v){const d=S.planDraft.days;const i=+v;const k=d.indexOf(i);if(k>=0)d.splice(k,1);else d.push(i);d.sort();render();},
