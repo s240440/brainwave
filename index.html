@@ -362,13 +362,9 @@ const PRESETS={
 function freshData(){
   return {
     profiles:[
-      {id:"p1",name:"Default",apps:clone(PRESETS.social.apps),notif:clone(PRESETS.social.notif)},
-      {id:"p2",name:"Study",apps:{others:"blocked",othersMin:10,othersEnd:"lock",ex:[{app:"Authenticator",mode:"allowed",min:10,end:"lock"},{app:"Rejsekort",mode:"allowed",min:10,end:"lock"},{app:"LinkedIn",mode:"limited",min:10,end:"lock"}]},notif:{calls:"all",messages:"name",others:"hidden",ex:[{app:"Discord",mode:"name"}]}}
+      {id:"p1",name:"Default",apps:clone(PRESETS.social.apps),notif:clone(PRESETS.social.notif)}
     ],
-    plans:[
-      {id:"pl1",profileId:"p1",start:"08:30",end:"15:30",days:[0,1,2,3,4],remind:true,on:true},
-      {id:"pl2",profileId:"p2",start:"13:00",end:"15:00",days:[1,3],remind:true,on:false}
-    ]
+    plans:[]
   };
 }
 let S;
