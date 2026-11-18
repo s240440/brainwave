@@ -964,13 +964,13 @@ setInterval(()=>{tick(false);tickHome();},250);
 
 /* ================= facilitator panel ================= */
 const pId=$("#pId"),pTask=$("#pTask");
-pTask.innerHTML=TASKS.map((t,i)=>`<option value="${esc(t)}">${i<6?"T"+(i+1)+" · ":""}${esc(t)}</option>`).join("");
+pTask.innerHTML=TASKS.map((t,i)=>`<option value="${esc(t)}">Task ${i+1}</option>`).join("");
 $("#pNotif").innerHTML=NOTIFS.map(n=>`<option value="${n.id}">${esc(n.app)} · ${esc(n.body)}</option>`).join("");
 pId.value=META.pid||"";
 pId.addEventListener("change",()=>{META.pid=pId.value.trim();store.set(LOGKEY+"-meta",META);log("participant_set",META.pid);});
 function renderTaskState(){
   const el=$("#pTaskState");
-  if(META.task&&META.taskStart){el.className="taskstate live";el.textContent="Running: "+META.task;}
+  if(META.task&&META.taskStart){el.className="taskstate live";el.textContent="Running: Task "+(TASKS.indexOf(META.task)+1);}
   else{el.className="taskstate";el.textContent="No task running";}
   $("#pDone").disabled=$("#pGiveup").disabled=!META.taskStart;
   const tp=$("#testPill");if(tp){const ti=TASKS.indexOf(META.task);tp.textContent=META.taskStart?(ti>=0&&ti<6?"Task "+(ti+1)+" · running":"Task running"):"Test menu";tp.classList.toggle("live",!!META.taskStart);}
