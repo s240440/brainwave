@@ -686,13 +686,10 @@ V.plan=()=>wrap(`${logo}${titleBlock("Planned focus","Planned sessions start on 
   <button class="btn btn-p" data-act="newPlan">+ Plan a session</button>`,"plan");
 
 function planMins(d){if(!d.start||!d.end)return 0;const m=t=>{const[h,mm]=t.split(":").map(Number);return h*60+mm;};let x=m(d.end)-m(d.start);if(x<=0)x+=1440;return x;}
-<<<<<<< HEAD
 function planHintHTML(d){return planMins(d)<15?`<div class="note" style="color:var(--warn)">A planned session must be at least 15 minutes.</div>`:`<div class="note">Starts automatically at ${d.start} and ends at ${d.end}. To stop early, press and hold End session.</div>`;}
 /* Updates only the hint and Save button, so an open time picker isn't closed by a re-render. */
 function updatePlanHint(){const d=S.planDraft;if(!d)return;const h=document.getElementById("planHint");if(h)h.innerHTML=planHintHTML(d);
   const b=document.getElementById("planSave");if(b){const bad=planMins(d)<15;b.disabled=bad;b.style.opacity=bad?".5":"";}}
-=======
->>>>>>> f4bd103a68bfe0c3d1d2108be4271166535b35dc
 V.planForm=()=>{
   const d=S.planDraft;const N=["M","T","W","T","F","S","S"],L=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
   return wrap(`${back("cancelPlan")}<h1 style="margin-top:0">${d.isNew?"New plan":"Edit plan"}</h1>
@@ -702,13 +699,8 @@ V.planForm=()=>{
   <div class="stack"><div class="label">Repeat</div><div class="days">${N.map((x,i)=>`<button class="${d.days.includes(i)?"on":""}" data-act="planDay" data-v="${i}" aria-pressed="${d.days.includes(i)}" aria-label="${L[i]}" data-log="Day ${L[i]}">${x}</button>`).join("")}</div><div class="note">No days selected = only once</div></div>
   <button class="remindcard" data-act="planRemind" role="checkbox" aria-checked="${d.remind}"><span><span style="font-size:15px;font-weight:500;display:block">Remind me before it starts</span><span class="note" style="display:block;margin-top:4px">You get a notification 5 minutes before</span></span><span class="box ${d.remind?"on":""}">${d.remind?svg.tick:""}</span></button>
   ${S.draftErr?`<div class="err">${esc(S.draftErr)}</div>`:""}
-<<<<<<< HEAD
   <div id="planHint">${planHintHTML(d)}</div>
   <div class="grow"></div><button class="btn btn-p" id="planSave" data-act="savePlan" ${planMins(d)<15?"disabled style='opacity:.5'":""}>Save plan</button>
-=======
-  ${planMins(d)<15?`<div class="note" style="color:var(--warn)">A planned session must be at least 15 minutes.</div>`:`<div class="note">Starts automatically at ${d.start} and ends at ${d.end}. To stop early, press and hold End session.</div>`}
-  <div class="grow"></div><button class="btn btn-p" data-act="savePlan" ${planMins(d)<15?"disabled style='opacity:.5'":""}>Save plan</button>
->>>>>>> f4bd103a68bfe0c3d1d2108be4271166535b35dc
   ${d.isNew?"":`<button class="btn btn-o" data-act="deletePlan">Delete plan</button>`}`);
 };
 
